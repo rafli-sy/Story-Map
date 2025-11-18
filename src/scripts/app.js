@@ -8,6 +8,16 @@ async function renderRoute() {
   const parsed = UrlParser.parseActiveUrlWithCombiner();
   const page = routes[parsed] || routes["/404"];
 
+  // ==========================================
+  // LOGIK NAVBAR (Sembunyikan di Login/Register)
+  // ==========================================
+  const navbar = document.querySelector(".navbar");
+  if (parsed === "/" || parsed === "/auth") {
+    if (navbar) navbar.style.display = "none";
+  } else {
+    if (navbar) navbar.style.display = "block";
+  }
+
   // Transition keluar
   viewEl.style.opacity = 0;
   viewEl.style.transform = "translateY(6px)";

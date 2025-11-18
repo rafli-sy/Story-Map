@@ -5,10 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>StoryApp</title>
+
+    <link rel="icon" href="./favicon.png">
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles/styles.css">
-    <!-- Optional Leaflet (uncomment if ingin peta nyata) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   </head>
 
@@ -18,10 +20,7 @@
     <header class="navbar" role="banner" aria-label="Main navigation">
       <div class="navbar-inner">
         <div class="brand" aria-hidden="false">
-          <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <rect x="2" y="2" width="20" height="20" rx="6" fill="#A5D8FF"></rect>
-            <path d="M6 12h12" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
+          <img src="./images/logo.png" alt="StoryApp Logo" width="36" height="36">
           <span class="brand-name">StoryApp</span>
         </div>
 
@@ -29,7 +28,6 @@
           <ul>
             <li><a href="#/home" data-nav>Home</a></li>
             <li><a href="#/about" data-nav>About</a></li>
-            <!-- <li><a href="#/add-stories" data-nav>Add Story</a></li> -->
           </ul>
         </nav>
 
@@ -52,9 +50,6 @@
     <footer class="site-footer" role="contentinfo" aria-hidden="false" style="text-align:center;padding:20px 0;">
       <small>© StoryApp — Dicoding Submission</small>
     </footer>
-
-    <!-- Optional Leaflet script -->
-    <!-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> -->
 
     <script type="module" src="./scripts/app.js"></script>
   </body>

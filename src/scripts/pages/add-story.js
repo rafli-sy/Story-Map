@@ -10,9 +10,6 @@ const AddPage = {
       <div class="form-wrapper" role="form">
         <form id="addForm" enctype="multipart/form-data">
 
-          <!-- ========================= -->
-          <!--  OPSI KAMERA -->
-          <!-- ========================= -->
           <label>Ambil Foto dari Kamera</label>
 
           <div class="camera-wrapper" style="margin-bottom:16px">
@@ -27,9 +24,6 @@ const AddPage = {
             <img id="cameraResult" style="max-width:100%;margin-top:8px;display:none;border-radius:8px" />
           </div>
 
-          <!-- ========================= -->
-          <!-- 🖼 OPSI UPLOAD FILE -->
-          <!-- ========================= -->
           <label for="photo">Pilih Gambar (max 1MB)</label>
           <input
             id="photo"
