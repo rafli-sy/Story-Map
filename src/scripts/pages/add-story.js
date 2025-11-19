@@ -1,5 +1,5 @@
-// src/scripts/pages/add-story.js
 import Api from "../data/api.js";
+import StoryIdb from "../data/story-db.js"; // Import Database Helper
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -142,7 +142,6 @@ const AddPage = {
 
           imgResult.src = URL.createObjectURL(blob);
           imgResult.style.display = "block";
-          // set alt deskriptif berdasarkan deskripsi input (jika ada)
           const desc = (descriptionInput.value || "").trim();
           imgResult.alt = desc ? `Foto: ${desc}` : "Hasil foto dari kamera";
         },
@@ -172,9 +171,8 @@ const AddPage = {
       const description = document.getElementById("description").value.trim();
       const latlng = document.getElementById("latlng").value;
 
-      // Prioritas: hasil kamera > file upload
+      // Ambil file: Prioritas Kamera > File Upload
       let file = null;
-
       if (capturedBlob) {
         file = new File([capturedBlob], "camera.jpg", { type: "image/jpeg" });
       } else if (fileInput.files[0]) {
@@ -184,27 +182,58 @@ const AddPage = {
         return;
       }
 
+      // Validasi ukuran
       if (file.size > 1024 * 1024) {
         msg.textContent = "Ukuran gambar maksimal 1MB.";
         return;
       }
 
+      // Siapkan data
       const formData = new FormData();
       formData.append("photo", file);
       formData.append("description", description);
 
+      let lat = null;
+      let lon = null;
       if (latlng) {
-        const [lat, lon] = latlng.split(",");
+        const [latitude, longitude] = latlng.split(",");
+        lat = latitude;
+        lon = longitude;
         formData.append("lat", lat);
         formData.append("lon", lon);
       }
 
       try {
+        // Coba kirim ke API
         await Api.addStory(formData, token);
         msg.textContent = "Berhasil mengirim story.";
         setTimeout(() => (window.location.hash = "#/home"), 900);
       } catch (err) {
-        msg.textContent = `Gagal: ${err.message}`;
+        // JIKA GAGAL (Misal Offline)
+        console.error(err);
+
+        if (!navigator.onLine) {
+          try {
+            // SIMPAN KE INDEXED DB (Background Sync Manual)
+            await StoryIdb.saveOfflineStory({
+              description: description,
+              photo: file,
+              lat: lat,
+              lon: lon,
+              createdAt: new Date().toISOString(),
+            });
+
+            msg.innerHTML = `<span style="color:#e67e22">Offline. Story disimpan dan akan dikirim otomatis saat online.</span>`;
+
+            // Reset form setelah simpan offline berhasil
+            setTimeout(() => (window.location.hash = "#/home"), 2000);
+          } catch (dbErr) {
+            msg.textContent = `Gagal simpan offline: ${dbErr.message}`;
+          }
+        } else {
+          // Gagal karena alasan lain (bukan koneksi)
+          msg.textContent = `Gagal: ${err.message}`;
+        }
       }
     });
   },
