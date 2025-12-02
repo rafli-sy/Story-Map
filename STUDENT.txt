@@ -1,2 +1,2 @@
-APP_URL= luminous-lokum-d89cdf.netlify.app
+APP_URL= storyapprafli.netlify.app
 MAP_SERVICE_API_KEY=
