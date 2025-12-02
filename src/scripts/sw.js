@@ -1,5 +1,5 @@
-import { precacheAndRoute } from "workbox-precaching";
-import { registerRoute } from "workbox-routing";
+import { precacheAndRoute, createHandlerBoundToURL } from "workbox-precaching";
+import { registerRoute, NavigationRoute } from "workbox-routing";
 import {
   StaleWhileRevalidate,
   CacheFirst,
@@ -7,14 +7,20 @@ import {
 } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { skipWaiting, clientsClaim } from "workbox-core";
-import StoryIdb from "./data/story-db"; 
-import CONFIG from "./config"; 
+import StoryIdb from "./data/story-db";
 
 skipWaiting();
 clientsClaim();
 
+// 1. Precache App Shell
 precacheAndRoute(self.__WB_MANIFEST);
 
+// 2. Navigation Fallback
+const handler = createHandlerBoundToURL("./index.html");
+const navigationRoute = new NavigationRoute(handler);
+registerRoute(navigationRoute);
+
+// 3. Caching API Stories
 registerRoute(
   ({ url }) => url.href.includes("/stories"),
   new NetworkFirst({
@@ -28,6 +34,7 @@ registerRoute(
   })
 );
 
+// 4. Caching Images
 registerRoute(
   ({ request }) => request.destination === "image",
   new CacheFirst({
@@ -41,6 +48,7 @@ registerRoute(
   })
 );
 
+// 5. Caching Static Resources
 registerRoute(
   ({ url }) =>
     url.origin.includes("fonts.googleapis.com") ||
@@ -52,6 +60,7 @@ registerRoute(
   })
 );
 
+// 6. Caching Map Tiles
 registerRoute(
   ({ url }) => url.origin.includes("tile.openstreetmap.org"),
   new CacheFirst({
@@ -65,30 +74,55 @@ registerRoute(
   })
 );
 
-// --- Push Notification ---
+// ==========================================
+// PERBAIKAN: PUSH NOTIFICATION EVENT
+// ==========================================
 self.addEventListener("push", (event) => {
-  let body;
-  if (event.data) {
-    body = event.data.text();
-  } else {
-    body = "Push message no payload";
+  console.log("[Service Worker] Push Received.");
+
+  let data = {};
+  try {
+    // Coba parsing JSON
+    data = event.data.json();
+  } catch (e) {
+    // Fallback jika data berupa text string biasa
+    data = {
+      title: "StoryApp",
+      body: event.data ? event.data.text() : "Ada update baru!",
+    };
   }
+
+  const title = data.title || "StoryApp Notification";
   const options = {
-    body: body,
+    body: data.body || "Cek cerita terbaru di StoryApp.",
     icon: "./icons/icon-192.png",
+    badge: "./icons/icon-192.png",
+    image: data.image || null, // Menampilkan gambar jika ada
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
       primaryKey: 1,
     },
   };
-  event.waitUntil(self.registration.showNotification("Story App", options));
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ============================================
-// FITUR TAMBAHAN: BACKGROUND SYNC (Agar sama dengan temanmu)
-// ============================================
+// Event Click pada Notifikasi
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  // Membuka aplikasi saat notifikasi diklik
+  event.waitUntil(
+    clients.matchAll({ type: "window" }).then((clientList) => {
+      if (clientList.length > 0) {
+        return clientList[0].focus();
+      }
+      return clients.openWindow("/");
+    })
+  );
+});
 
+// --- Background Sync Logic ---
 self.addEventListener("sync", (event) => {
   if (event.tag === "sync-new-stories") {
     console.log("Service Worker: Syncing new stories...");
@@ -100,7 +134,12 @@ const syncNewStories = async () => {
   try {
     const stories = await StoryIdb.getAllOfflineStories();
     for (const story of stories) {
-      if (!story.token) continue;
+      // Pastikan token tersedia (jika disimpan di object store offline)
+      // atau logika pengambilan token disesuaikan
+      if (!story.token && !localStorage.getItem("token")) continue;
+
+      const userToken = story.token || localStorage.getItem("token");
+
       const formData = new FormData();
       formData.append("photo", story.photo);
       formData.append("description", story.description);
@@ -111,9 +150,7 @@ const syncNewStories = async () => {
         "https://story-api.dicoding.dev/v1/stories",
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${story.token}`,
-          },
+          headers: { Authorization: `Bearer ${userToken}` },
           body: formData,
         }
       );
@@ -121,6 +158,12 @@ const syncNewStories = async () => {
       if (response.ok) {
         await StoryIdb.deleteOfflineStory(story.id);
         console.log(`Background Sync: Story ${story.id} uploaded.`);
+
+        self.registration.showNotification("Story Terkirim (Background Sync)", {
+          body: "Koneksi kembali! Ceritamu yang tertunda sudah dikirim.",
+          icon: "./icons/icon-192.png",
+          vibrate: [100, 50, 100],
+        });
       }
     }
   } catch (error) {

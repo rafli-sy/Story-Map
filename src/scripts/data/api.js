@@ -1,7 +1,7 @@
-// src/scripts/data/api.js
 const BASE = "https://story-api.dicoding.dev/v1";
 
 const Api = {
+  // ... (kode register, login, getStories, addStory biarkan tetap sama) ...
   async register({ name, email, password }) {
     const res = await fetch(`${BASE}/register`, {
       method: "POST",
@@ -60,27 +60,44 @@ const Api = {
     return j;
   },
 
-  // --- PERBAIKAN: TAMBAHKAN METHOD INI ---
+  // === FITUR SUBSCRIBE ===
   async subscribeToNotify(subscription) {
-    // Pastikan user sudah login dan token tersedia
     const token = localStorage.getItem("token");
-    if (!token) return; // Atau throw error jika wajib login
-
-    // Format body sesuai kebutuhan server (biasanya JSON string dari subscription object)
-    const body = JSON.stringify(subscription);
+    if (!token) throw new Error("Token tidak ditemukan");
 
     const res = await fetch(`${BASE}/notifications/subscribe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Sertakan token!
+        Authorization: `Bearer ${token}`,
       },
-      body: body,
+      body: JSON.stringify(subscription),
     });
 
     const j = await res.json();
     if (j.error)
       throw new Error(j.message || "Gagal subscribe push notification");
+    return j;
+  },
+
+  // === FITUR UNSUBSCRIBE (WAJIB ADA) ===
+  async unsubscribeFromNotify(endpoint) {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Token tidak ditemukan");
+
+    // Endpoint sesuai dokumentasi Dicoding
+    const res = await fetch(`${BASE}/notifications/subscribe`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ endpoint: endpoint }),
+    });
+
+    const j = await res.json();
+    if (j.error)
+      throw new Error(j.message || "Gagal unsubscribe push notification");
     return j;
   },
 };

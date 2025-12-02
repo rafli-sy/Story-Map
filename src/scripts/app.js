@@ -13,15 +13,17 @@ async function renderRoute() {
   }
 
   // ============
-  // LOGIK NAVBAR 
+  // LOGIK NAVBAR
   // ============
   const navbar = document.querySelector(".navbar");
   const hideNavRoutes = ["/", "/login", "/register"];
 
-  if (hideNavRoutes.includes(parsed)) {
-    if (navbar) navbar.style.display = "none";
-  } else {
-    if (navbar) navbar.style.display = "block";
+  if (navbar) {
+    if (hideNavRoutes.includes(parsed)) {
+      navbar.style.display = "none";
+    } else {
+      navbar.style.display = "block";
+    }
   }
 
   const doRender = async () => {
@@ -31,21 +33,21 @@ async function renderRoute() {
       await page.afterRender();
     }
 
-    // Fokus aksesibilitas ke konten utama
-    const main = document.querySelector("#main-content");
+    // Replace Feather Icons setelah render selesai
+    if (window.feather) {
+      window.feather.replace();
+    }
+
+    // Fokus aksesibilitas
+    const main = document.querySelector("#main");
     if (main) {
-      if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
       main.focus();
     }
   };
 
-  // View Transition API
   if (document.startViewTransition) {
-    try {
-      await document.startViewTransition(doRender);
-    } catch (e) {
-      await doRender();
-    }
+    const transition = document.startViewTransition(doRender);
+    transition.finished.catch(() => {});
   } else {
     await doRender();
   }
@@ -55,23 +57,64 @@ async function renderRoute() {
  * INIT APP
  * ==========================*/
 function init() {
-  const bindLogout = () => {
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.onclick = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("name");
-        window.location.hash = "#/login";
-      };
+  // Init Icons di Navbar (Static)
+  if (window.feather) {
+    window.feather.replace();
+  }
+
+  // 1. LOGIC LOGOUT (Desktop)
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("name");
+      window.location.hash = "#/login";
+    };
+  }
+
+  // 2. LOGIC SIDEBAR & HAMBURGER (Mobile)
+  const hamburger = document.querySelector("#hamburger");
+  const drawer = document.querySelector("#drawer");
+  const navLinks = document.querySelectorAll(".main-nav a");
+
+  if (hamburger && drawer) {
+    hamburger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      drawer.classList.toggle("open");
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (drawer && drawer.classList.contains("open")) {
+      if (!drawer.contains(event.target) && !hamburger.contains(event.target)) {
+        drawer.classList.remove("open");
+      }
     }
-  };
+  });
+
+  navLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      if (drawer) drawer.classList.remove("open");
+    });
+  });
+
+  // 3. LOGIC LOGOUT (Mobile)
+  const logoutBtnMobile = document.getElementById("logoutBtnMobile");
+  if (logoutBtnMobile) {
+    logoutBtnMobile.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("name");
+      window.location.hash = "#/login";
+      if (drawer) drawer.classList.remove("open");
+    });
+  }
 
   // Render saat load
-  renderRoute().then(bindLogout);
+  renderRoute();
 
   // Render saat hash berubah
   window.addEventListener("hashchange", () => {
-    renderRoute().then(bindLogout);
+    renderRoute();
   });
 }
 

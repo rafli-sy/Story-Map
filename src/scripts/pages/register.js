@@ -3,44 +3,44 @@ import Api from "../data/api.js";
 const RegisterPage = {
   async render() {
     return `
-      <section class="auth-wrapper" aria-labelledby="auth-title">
+      <div class="auth-container">
         <div class="auth-card">
-          <div class="auth-brand">
-            <h1 id="auth-title">Daftar StoryApp</h1>
-            <p class="muted">Buat akun baru untuk berbagi cerita</p>
+          <div class="auth-header">
+            <img src="./images/logo.png" alt="Logo" width="50" style="margin-bottom:8px;">
+            <h1>Daftar Akun</h1>
+            <p class="text-muted" style="color:#666;">Bergabung untuk berbagi cerita menarik</p>
           </div>
 
-          <form id="regForm" class="form-wrapper">
-            <label for="rname">Nama</label>
-            <input id="rname" name="name" type="text" required autocomplete="name" />
+          <form id="regForm">
+            <label for="rname">Nama Lengkap</label>
+            <input id="rname" name="name" type="text" required placeholder="Nama Anda" autocomplete="name" />
             
             <label for="remail">Email</label>
-            <input id="remail" name="email" type="email" required autocomplete="email" />
+            <input id="remail" name="email" type="email" required placeholder="nama@email.com" autocomplete="email" />
             
             <label for="rpassword">Password</label>
-            <input id="rpassword" name="password" type="password" required minlength="8" autocomplete="new-password" />
+            <input id="rpassword" name="password" type="password" required minlength="8" placeholder="••••••••" autocomplete="new-password" />
             
-            <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
-              <button class="btn-pill" type="submit">Daftar</button>
-              <div id="regMsg" aria-live="polite" class="muted"></div>
-            </div>
+            <button class="btn-pill btn-full" type="submit" style="margin-top:10px;">Daftar</button>
           </form>
 
-          <div style="margin-top: 16px; text-align: center;">
-            <p>Sudah punya akun? <a href="#/login">Masuk di sini</a></p>
+          <div style="margin-top: 24px; text-align: center; font-size: 0.9rem;">
+            Sudah punya akun? <a href="#/login" style="color:var(--primary); font-weight:700; text-decoration:none;">Masuk di sini</a>
           </div>
         </div>
-      </section>
+      </div>
     `;
   },
 
   async afterRender() {
     const form = document.getElementById("regForm");
-    const msg = document.getElementById("regMsg");
+    const btn = form.querySelector("button");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      msg.textContent = "Membuat akun...";
+      btn.textContent = "Membuat Akun...";
+      btn.disabled = true;
+
       try {
         const payload = {
           name: document.getElementById("rname").value.trim(),
@@ -49,14 +49,23 @@ const RegisterPage = {
         };
 
         await Api.register(payload);
-        msg.textContent = "Akun berhasil dibuat. Silakan login.";
 
-        // Redirect ke login setelah register sukses
-        setTimeout(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Akun berhasil dibuat. Silakan login.",
+          confirmButtonText: "Ke Halaman Login",
+        }).then(() => {
           window.location.hash = "#/login";
-        }, 1000);
+        });
       } catch (err) {
-        msg.textContent = `Gagal: ${err.message}`;
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Daftar",
+          text: err.message,
+        });
+        btn.textContent = "Daftar";
+        btn.disabled = false;
       }
     });
   },

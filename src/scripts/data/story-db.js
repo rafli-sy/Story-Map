@@ -24,7 +24,6 @@ const dbPromise = openDB(DATABASE_NAME, DATABASE_VERSION, {
 });
 
 const StoryIdb = {
-  // ... method lama biarkan saja ...
   async getStory(id) {
     return (await dbPromise).get(OBJECT_STORE_NAME, id);
   },

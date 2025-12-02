@@ -1,2 +1,2 @@
-APP_URL=precious-paprenjak-4a45c6.netlify.app
+APP_URL= luminous-lokum-d89cdf.netlify.app
 MAP_SERVICE_API_KEY=
