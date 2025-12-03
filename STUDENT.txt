@@ -1,2 +1,2 @@
-APP_URL= storyapprafli.netlify.app
+APP_URL= storyappnew.netlify.app
 MAP_SERVICE_API_KEY=
